@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Paste, Drop, or Upload an Image</title>
+  <title>Upload an Image</title>
   <style>
     body {
       font-family: sans-serif;
@@ -40,13 +40,13 @@
 <body>
   <h1>Upload an Image</h1>
 
-  <!-- Custom drop/paste zone -->
+  <!-- Drop / paste / click zone -->
   <div id="dropzone">Click, Paste (Ctrl+V), or Drop an Image Here</div>
 
-  <!-- Preview area -->
+  <!-- Upload preview -->
   <div id="preview"></div>
 
-  <!-- Uploadcare hidden input (not shown to user) -->
+  <!-- Uploadcare widget (hidden) -->
   <input type="hidden" id="uploader" role="uploadcare-uploader"
          data-public-key="e09b3ef063c5d6d265e1"
          data-images-only
@@ -55,38 +55,43 @@
   <!-- Uploadcare widget script -->
   <script src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js"></script>
   <script>
-    UPLOADCARE_PUBLIC_KEY = 'e09b3ef063c5d6d265e1'; // ✅ Replace this with your actual public key
+    UPLOADCARE_PUBLIC_KEY = 'e09b3ef063c5d6d265e1'; // ✅ Replace with your actual public key
 
     const dropzone = document.getElementById('dropzone');
     const widgetInput = document.getElementById('uploader');
     const widget = uploadcare.Widget(widgetInput);
 
-    // Click to open Uploadcare dialog
-    dropzone.addEventListener('click', () => {
-      widget.openDialog(null, { multiple: false });
-    });
-
-    // Handle successful upload
+    // Handle widget completion
     widget.onUploadComplete(info => {
       document.getElementById('preview').innerHTML =
         `<p>Image uploaded successfully!</p><img src="${info.cdnUrl}" alt="Uploaded image" width="300">`;
     });
 
-    // ✅ Handle paste from clipboard
+    // Open widget on click
+    dropzone.addEventListener('click', () => {
+      widget.openDialog(null, { multiple: false });
+    });
+
+    // Handle paste from clipboard
     document.addEventListener('paste', async (event) => {
       const items = event.clipboardData.items;
       for (let item of items) {
         if (item.type.indexOf('image') === 0) {
           const file = item.getAsFile();
           if (file) {
-            const uploadedFile = await uploadcare.fileFrom('object', file);
-            widget.value(uploadedFile);
+            console.log('Pasted file:', file);
+            try {
+              const uploadedFile = await uploadcare.fileFrom('object', file);
+              widget.value(uploadedFile);
+            } catch (err) {
+              console.error('Upload failed:', err);
+            }
           }
         }
       }
     });
 
-    // ✅ Handle drag-and-drop image file
+    // Handle drag over
     dropzone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropzone.style.borderColor = '#0077ff';
@@ -96,13 +101,19 @@
       dropzone.style.borderColor = '#aaa';
     });
 
+    // Handle drop
     dropzone.addEventListener('drop', async (e) => {
       e.preventDefault();
       dropzone.style.borderColor = '#aaa';
       const file = e.dataTransfer.files[0];
       if (file && file.type.startsWith('image/')) {
-        const uploadedFile = await uploadcare.fileFrom('object', file);
-        widget.value(uploadedFile);
+        console.log('Dropped file:', file);
+        try {
+          const uploadedFile = await uploadcare.fileFrom('object', file);
+          widget.value(uploadedFile);
+        } catch (err) {
+          console.error('Upload failed:', err);
+        }
       }
     });
   </script>
