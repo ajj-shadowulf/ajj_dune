@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Paste or Drop Image Upload</title>
+  <title>Paste, Drop, or Upload an Image</title>
   <style>
     body {
       font-family: sans-serif;
@@ -41,12 +41,12 @@
   <h1>Upload an Image</h1>
 
   <!-- Custom drop/paste zone -->
-  <div id="dropzone">Click or Paste (Ctrl+V) or Drop an Image Here</div>
+  <div id="dropzone">Click, Paste (Ctrl+V), or Drop an Image Here</div>
 
   <!-- Preview area -->
   <div id="preview"></div>
 
-  <!-- Uploadcare hidden input (programmatically triggered) -->
+  <!-- Uploadcare hidden input (not shown to user) -->
   <input type="hidden" id="uploader" role="uploadcare-uploader"
          data-public-key="e09b3ef063c5d6d265e1"
          data-images-only
@@ -55,37 +55,38 @@
   <!-- Uploadcare widget script -->
   <script src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js"></script>
   <script>
-    UPLOADCARE_PUBLIC_KEY = 'e09b3ef063c5d6d265e1'; // Replace with your key
+    UPLOADCARE_PUBLIC_KEY = 'e09b3ef063c5d6d265e1'; // ✅ Replace this with your actual public key
 
     const dropzone = document.getElementById('dropzone');
     const widgetInput = document.getElementById('uploader');
     const widget = uploadcare.Widget(widgetInput);
 
-    // Open widget dialog when clicking the dropzone
+    // Click to open Uploadcare dialog
     dropzone.addEventListener('click', () => {
-      widget.openDialog(null, {
-        multiple: false
-      });
+      widget.openDialog(null, { multiple: false });
     });
 
-    // Handle upload completion
+    // Handle successful upload
     widget.onUploadComplete(info => {
       document.getElementById('preview').innerHTML =
         `<p>Image uploaded successfully!</p><img src="${info.cdnUrl}" alt="Uploaded image" width="300">`;
     });
 
-    // Handle paste from clipboard
-    document.addEventListener('paste', (event) => {
+    // ✅ Handle paste from clipboard
+    document.addEventListener('paste', async (event) => {
       const items = event.clipboardData.items;
       for (let item of items) {
         if (item.type.indexOf('image') === 0) {
           const file = item.getAsFile();
-          widget.value(file);
+          if (file) {
+            const uploadedFile = await uploadcare.fileFrom('object', file);
+            widget.value(uploadedFile);
+          }
         }
       }
     });
 
-    // Handle drag-and-drop
+    // ✅ Handle drag-and-drop image file
     dropzone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropzone.style.borderColor = '#0077ff';
@@ -95,12 +96,13 @@
       dropzone.style.borderColor = '#aaa';
     });
 
-    dropzone.addEventListener('drop', (e) => {
+    dropzone.addEventListener('drop', async (e) => {
       e.preventDefault();
       dropzone.style.borderColor = '#aaa';
       const file = e.dataTransfer.files[0];
       if (file && file.type.startsWith('image/')) {
-        widget.value(file);
+        const uploadedFile = await uploadcare.fileFrom('object', file);
+        widget.value(uploadedFile);
       }
     });
   </script>
