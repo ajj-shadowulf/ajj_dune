@@ -1,1 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Image Upload with Uploadcare</title>
+</head>
+<body>
+  <h1>Upload an Image</h1>
 
+  <!-- Uploadcare widget -->
+  <input type="hidden" role="uploadcare-uploader" data-public-key="e09b3ef063c5d6d265e1" />
+
+  <div id="preview"></div>
+
+  <script>
+    // Wait for Uploadcare widget to load
+    UPLOADCARE_PUBLIC_KEY = 'e09b3ef063c5d6d265e1'; // Replace with your real public key
+
+    uploadcare.Widget('[role=uploadcare-uploader]').onUploadComplete(function(info) {
+      console.log('Uploaded:', info);
+      document.getElementById('preview').innerHTML =
+        `<p>Image uploaded successfully!</p><img src="${info.cdnUrl}" alt="Uploaded image" width="300">`;
+    });
+  </script>
+
+  <!-- Load the Uploadcare widget -->
+  <script src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js"></script>
+</body>
+</html>
