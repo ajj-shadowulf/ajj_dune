@@ -1,34 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Image Upload from Clipboard</title>
+  <meta charset="UTF-8" />
+  <title>Paste or Drop Image Upload</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 40px;
+    }
+
+    #dropzone {
+      width: 400px;
+      height: 200px;
+      border: 2px dashed #aaa;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #666;
+      cursor: pointer;
+      padding: 20px;
+      background: #f9f9f9;
+      transition: border-color 0.3s;
+    }
+
+    #dropzone:hover {
+      border-color: #333;
+    }
+
+    #preview {
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Paste or Upload an Image</h1>
+  <h1>Upload an Image</h1>
 
-  <!-- Uploadcare widget input -->
-  <input
-    type="hidden"
-    role="uploadcare-uploader"
-    data-public-key="e09b3ef063c5d6d265e1"
-    data-tabs="file url camera"
-    data-images-only="true"
-  />
+  <!-- Custom drop/paste zone -->
+  <div id="dropzone">Click or Paste (Ctrl+V) or Drop an Image Here</div>
 
-  <p>Try pasting an image (Ctrl+V) here after using <strong>Win + Shift + S</strong>.</p>
-
+  <!-- Preview area -->
   <div id="preview"></div>
 
-  <script>
-    UPLOADCARE_PUBLIC_KEY = 'e09b3ef063c5d6d265e1'; // Replace with your real key
+  <!-- Uploadcare hidden input (programmatically triggered) -->
+  <input type="hidden" id="uploader" role="uploadcare-uploader"
+         data-public-key="e09b3ef063c5d6d265e1"
+         data-images-only
+         data-clearable />
 
-    uploadcare.Widget('[role=uploadcare-uploader]').onUploadComplete(function(info) {
+  <!-- Uploadcare widget script -->
+  <script src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js"></script>
+  <script>
+    UPLOADCARE_PUBLIC_KEY = 'e09b3ef063c5d6d265e1'; // Replace with your key
+
+    const dropzone = document.getElementById('dropzone');
+    const widgetInput = document.getElementById('uploader');
+    const widget = uploadcare.Widget(widgetInput);
+
+    // Open widget dialog when clicking the dropzone
+    dropzone.addEventListener('click', () => {
+      widget.openDialog(null, {
+        multiple: false
+      });
+    });
+
+    // Handle upload completion
+    widget.onUploadComplete(info => {
       document.getElementById('preview').innerHTML =
-        `<p>Uploaded image:</p><img src="${info.cdnUrl}" alt="Uploaded image" width="300">`;
+        `<p>Image uploaded successfully!</p><img src="${info.cdnUrl}" alt="Uploaded image" width="300">`;
+    });
+
+    // Handle paste from clipboard
+    document.addEventListener('paste', (event) => {
+      const items = event.clipboardData.items;
+      for (let item of items) {
+        if (item.type.indexOf('image') === 0) {
+          const file = item.getAsFile();
+          widget.value(file);
+        }
+      }
+    });
+
+    // Handle drag-and-drop
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = '#0077ff';
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.style.borderColor = '#aaa';
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = '#aaa';
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        widget.value(file);
+      }
     });
   </script>
-
-  <script src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js"></script>
 </body>
 </html>
