@@ -21,7 +21,7 @@ def get_image_text(uuid):
     return {"uuid": uuid, "text": text.strip()}
 
 def main():
-    with open({UUID_LIST_PATH}) as f:
+    with open(UUID_LIST_PATH) as f:
         uuids = [line.strip() for line in f if line.strip()]
 
     results = []
@@ -29,7 +29,7 @@ def main():
         print(f"Processing {uuid}...")
         results.append(get_image_text(uuid))
 
-    with open({OUTPUT_PATH}, "w") as f:
+    with open(OUTPUT_PATH, "w") as f:
         json.dump(results, f, indent=2)
     print("Saved results to output.json")
 
