@@ -1,0 +1,35 @@
+# process_images.py
+import os
+import requests
+from PIL import Image
+from io import BytesIO
+import pytesseract
+import json
+
+UPLOADCARE_CDN_BASE = "https://ucarecdn.com"
+
+def get_image_text(uuid):
+    url = f"{UPLOADCARE_CDN_BASE}/{uuid}/"
+    response = requests.get(url)
+    if response.status_code != 200:
+        return {"uuid": uuid, "error": "Download failed"}
+
+    img = Image.open(BytesIO(response.content))
+    text = pytesseract.image_to_string(img)
+    return {"uuid": uuid, "text": text.strip()}
+
+def main():
+    with open("uuid_list.txt") as f:
+        uuids = [line.strip() for line in f if line.strip()]
+
+    results = []
+    for uuid in uuids:
+        print(f"Processing {uuid}...")
+        results.append(get_image_text(uuid))
+
+    with open("output.json", "w") as f:
+        json.dump(results, f, indent=2)
+    print("Saved results to output.json")
+
+if __name__ == "__main__":
+    main()
