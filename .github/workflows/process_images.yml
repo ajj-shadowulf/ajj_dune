@@ -30,6 +30,6 @@ jobs:
       run: |
         git config user.name github-actions
         git config user.email github-actions@github.com
-        git add output.json
+        git add files/output.json
         git commit -m "Update processed results"
         git push
