@@ -32,8 +32,8 @@ def main():
         print(f"Processing {uuid}...")
         results.append(get_image_text(uuid))
 
-    with open(OUTPUT_PATH, "w") as f:
-        json.dump(results, f, indent=2)
+    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+        json.dump(results, f, indent=2, ensure_ascii=False)
     print("Saved results to output.json")
 
 if __name__ == "__main__":
