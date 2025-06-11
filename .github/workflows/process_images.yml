@@ -1,0 +1,35 @@
+# .github/workflows/process_images.yml
+name: Process Images
+
+on:
+  workflow_dispatch:  # This means it runs manually from the GitHub UI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y tesseract-ocr
+        pip install pillow pytesseract requests
+
+    - name: Run image processing script
+      run: python processes/process_images.py
+
+    - name: Commit results
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add output.json
+        git commit -m "Update processed results"
+        git push
