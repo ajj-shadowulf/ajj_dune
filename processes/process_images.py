@@ -2,6 +2,7 @@
 import os
 import requests
 from PIL import Image
+from PIL import ImageOps
 from io import BytesIO
 import pytesseract
 import json
@@ -17,7 +18,9 @@ def get_image_text(uuid):
         return {"uuid": uuid, "error": "Download failed"}
 
     img = Image.open(BytesIO(response.content))
-    text = pytesseract.image_to_string(img)
+    img = ImageOps.grayscale(img)   # Convert to grayscale
+    img = img.resize((img.width * 2, img.height * 2))  # Upscale
+    text = pytesseract.image_to_string(img, lang='jpn+eng')
     return {"uuid": uuid, "text": text.strip()}
 
 def main():
