@@ -3,6 +3,7 @@ import requests
 import json
 import csv
 import re
+import unicodedata
 from PIL import Image, ImageOps
 from io import BytesIO
 import os
@@ -15,12 +16,16 @@ OUTPUT_CSV_PATH = "files/output.csv"
 UPLOADCARE_CDN_BASE = "https://ucarecdn.com"
 
 def extract_area_code(text):
-    match = re.search(r'([A-Z]-\d)地区', text)
+    # Normalize text to convert full-width chars to ASCII
+    text = unicodedata.normalize("NFKC", text)
+
+    # Search for pattern like "D-6地区" (optionally with whitespace before 地区)
+    match = re.search(r'([A-Z]-\d)\s*地区', text)
     if match:
         print(f"✅ Found area code: {match.group(1)}")
         return match.group(1)
     else:
-        print("⚠️ No area code found in text.")
+        print(f"⚠️ No area code found in text. Raw text was:\n{text}")
         return None
 
 def process_image(uuid):
