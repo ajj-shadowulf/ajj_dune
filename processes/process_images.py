@@ -19,8 +19,8 @@ def extract_area_code(text):
     # Normalize text to convert full-width chars to ASCII
     text = unicodedata.normalize("NFKC", text)
 
-    # Search for pattern like "D-6地区" (optionally with whitespace before 地区)
-    match = re.search(r'([A-Z]-\d)\s*地区', text)
+    # Match codes like D-6地区 or D-6地図 (in case OCR reads 区 as 図)
+    match = re.search(r'([A-Z]-\d)\s*地[区図]', text)
     if match:
         print(f"✅ Found area code: {match.group(1)}")
         return match.group(1)
