@@ -1,62 +1,12 @@
-name: Master Run - Fetch and Process
+name: Master Run
 
 on:
   workflow_dispatch:
 
 jobs:
-  fetch-uuids:
-    name: Fetch Uploadcare UUIDs
-    runs-on: ubuntu-latest
-    env:
-      UPLOADCARE_PUBLIC_KEY: ${{ secrets.UPLOADCARE_PUBLIC_KEY }}
-      UPLOADCARE_SECRET_KEY: ${{ secrets.UPLOADCARE_SECRET_KEY }}
-    steps:
-      - uses: actions/checkout@v3
+  fetch_uuids:
+    uses: ./.github/workflows/fetch_uploadcare_uuids.yml
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install requests pytz
-
-      - name: Run UUID Fetch Script
-        run: python processes/fetch_uploadcare_uuids.py
-
-      - name: Commit UUID List
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add files/uuid_list.json
-          git commit -m "Update UUID list" || echo "No changes to commit"
-          git push
-
-  process-images:
-    name: Process Uploaded Images
-    needs: fetch-uuids
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y tesseract-ocr libtesseract-dev tesseract-ocr-jpn
-          pip install pillow pytesseract requests
-
-      - name: Run Processing Script
-        run: python processes/process_images.py
-
-      - name: Commit Results
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add files/output.json files/output.csv
-          git commit -m "Update processed results" || echo "No changes to commit"
-          git push
+  process_images:
+    needs: fetch_uuids
+    uses: ./.github/workflows/process_images.yml

@@ -1,0 +1,44 @@
+name: Fetch Uploadcare UUIDs
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch_uuids:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests pytz
+
+      - name: Run UUID fetch script
+        env:
+          UPLOADCARE_PUBLIC_KEY: ${{ secrets.UPLOADCARE_PUBLIC_KEY }}
+          UPLOADCARE_SECRET_KEY: ${{ secrets.UPLOADCARE_SECRET_KEY }}
+        run: |
+          python processes/fetch_uploadcare_uuids.py
+
+      - name: Commit results
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          # Check if file exists before trying to add
+          if [ -f files/uuid_list.json ]; then
+            git add files/uuid_list.json
+          fi
+
+          git commit -m "Update UUID list" || echo "No changes to commit"
+          git push
