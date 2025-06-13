@@ -1,35 +1,33 @@
 # process_images.py
-import requests
+import os
 import json
 import csv
 import re
-import unicodedata
-from PIL import Image, ImageOps
+import pytesseract
+import requests
 from io import BytesIO
-import os
+from PIL import Image, ImageOps
 
-# File paths
-UUID_LIST_PATH = "files/uuid_list.txt"
+# Paths
+UUID_LIST_PATH = "files/uuid_list.json"
 OUTPUT_JSON_PATH = "files/output.json"
 OUTPUT_CSV_PATH = "files/output.csv"
-
 UPLOADCARE_CDN_BASE = "https://ucarecdn.com"
 
 def extract_area_code(text):
-    # Normalize text to convert full-width chars to ASCII
-    text = unicodedata.normalize("NFKC", text)
-
-    # Match codes like D-6地区 or D-6地図 (in case OCR reads 区 as 図)
-    match = re.search(r'([A-Z]-\d)\s*地[区図]', text)
+    match = re.search(r'([A-I]-\d)地区', text)
     if match:
         print(f"✅ Found area code: {match.group(1)}")
         return match.group(1)
     else:
-        print(f"⚠️ No area code found in text. Raw text was:\n{text}")
-        return None
+        print(f"⚠️ No area code found in text. Raw text was:\n{text}\n")
+        return ""
 
-def process_image(uuid):
+def process_image(uuid_entry):
+    uuid = uuid_entry["uuid"]
+    map_week = uuid_entry["map_week"]
     print(f"🔄 Processing UUID: {uuid}")
+
     url = f"{UPLOADCARE_CDN_BASE}/{uuid}/"
     response = requests.get(url)
     response.raise_for_status()
@@ -46,24 +44,23 @@ def process_image(uuid):
     return {
         "uuid": uuid,
         "text": text.strip(),
-        "area_code": area_code or ""
+        "area_code": area_code,
+        "map_week": map_week
     }
 
 def main():
-    # Ensure output directory exists
     os.makedirs(os.path.dirname(OUTPUT_JSON_PATH), exist_ok=True)
 
     with open(UUID_LIST_PATH, "r", encoding="utf-8") as f:
-        uuids = [line.strip() for line in f if line.strip()]
+        uuid_entries = json.load(f)
 
     results = []
-
-    for uuid in uuids:
+    for entry in uuid_entries:
         try:
-            result = process_image(uuid)
+            result = process_image(entry)
             results.append(result)
         except Exception as e:
-            print(f"❌ Error processing {uuid}: {e}")
+            print(f"❌ Error processing {entry['uuid']}: {e}")
 
     # Write JSON
     with open(OUTPUT_JSON_PATH, "w", encoding="utf-8") as f:
@@ -73,11 +70,10 @@ def main():
     # Write CSV
     with open(OUTPUT_CSV_PATH, "w", encoding="utf-8", newline="") as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(["uuid", "area_code"])
+        writer.writerow(["uuid", "area_code", "map_week"])
         for r in results:
-            writer.writerow([r["uuid"], r["area_code"]])
+            writer.writerow([r["uuid"], r["area_code"], r["map_week"]])
     print(f"✅ CSV written to {OUTPUT_CSV_PATH}")
 
 if __name__ == "__main__":
-    import pytesseract
     main()
