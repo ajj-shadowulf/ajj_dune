@@ -10,8 +10,10 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
         with:
           persist-credentials: true
 
@@ -26,13 +28,19 @@ jobs:
           sudo apt-get install -y tesseract-ocr libtesseract-dev tesseract-ocr-jpn
           pip install pillow pytesseract requests
 
-      - name: Run processing script
+      - name: Fetch new image UUIDs from Uploadcare
+        env:
+          UPLOADCARE_PUBLIC_KEY: ${{ secrets.UPLOADCARE_PUBLIC_KEY }}
+          UPLOADCARE_SECRET_KEY: ${{ secrets.UPLOADCARE_SECRET_KEY }}
+        run: python processes/update_uuid_list.py
+
+      - name: Run image processing
         run: python processes/process_images.py
 
       - name: Commit results
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add files/output.json
+          git add files/output.json files/output.csv files/uuid_list.txt files/uuid_metadata.csv
           git commit -m "Update processed results" || echo "No changes to commit"
           git push
