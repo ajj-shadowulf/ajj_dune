@@ -1,87 +1,106 @@
-import requests
 import os
 import json
-from datetime import datetime, timedelta
+import requests
+from datetime import datetime, timedelta, timezone
 import pytz
 
-# === Configuration ===
 UPLOADCARE_API_BASE = "https://api.uploadcare.com"
-UPLOADCARE_PUBLIC_KEY = os.getenv("UPLOADCARE_PUBLIC_KEY")
-UPLOADCARE_SECRET_KEY = os.getenv("UPLOADCARE_SECRET_KEY")
-UUID_LIST_PATH = "files/uuid_list.json"
+UPLOADCARE_CDN_BASE = "https://ucarecdn.com"
+UPLOADCARE_PUBLIC_KEY = os.environ.get("UPLOADCARE_PUBLIC_KEY")
+UPLOADCARE_SECRET_KEY = os.environ.get("UPLOADCARE_SECRET_KEY")
 
-# === Determine latest Tuesday 6AM JST ===
-def get_latest_map_week_jst():
-    jst = pytz.timezone("Asia/Tokyo")
-    now_jst = datetime.now(jst)
-    days_since_tuesday = (now_jst.weekday() - 1) % 7
-    last_tuesday = now_jst - timedelta(days=days_since_tuesday)
-    return last_tuesday.replace(hour=6, minute=0, second=0, microsecond=0)
+UUID_LIST_PATH = "files/uuid_list.txt"
+JST = pytz.timezone("Asia/Tokyo")
 
-def fetch_recent_uploads():
+
+def get_latest_tuesday_6am_jst(now=None):
+    if not now:
+        now = datetime.now(JST)
+    weekday = now.weekday()  # Monday is 0, Sunday is 6
+    days_since_tuesday = (weekday - 1) % 7
+    latest_tuesday = now - timedelta(days=days_since_tuesday)
+    latest_tuesday_6am = latest_tuesday.replace(hour=6, minute=0, second=0, microsecond=0)
+    if now < latest_tuesday_6am:
+        latest_tuesday_6am -= timedelta(days=7)
+    return latest_tuesday_6am
+
+
+def fetch_uploadcare_files():
     print("📥 Fetching files from Uploadcare...")
-
+    files = []
+    url = f"{UPLOADCARE_API_BASE}/files/"
     headers = {
-        "Authorization": f"Uploadcare.Simple {UPLOADCARE_PUBLIC_KEY}:{UPLOADCARE_SECRET_KEY}"
+        "Authorization": f"Uploadcare.Simple {UPLOADCARE_PUBLIC_KEY}:{UPLOADCARE_SECRET_KEY}",
+        "Accept": "application/vnd.uploadcare-v0.5+json"
     }
 
-    files = []
-    next_url = f"{UPLOADCARE_API_BASE}/files/"
-    while next_url:
-        response = requests.get(next_url, headers=headers)
+    while url:
+        response = requests.get(url, headers=headers)
         response.raise_for_status()
         data = response.json()
-        files.extend(data["results"])
-        next_url = data["next"]
+        files.extend(data.get("results", []))
+        url = data.get("next")  # pagination
 
     return files
 
+
+def load_existing_uuids():
+    if not os.path.exists(UUID_LIST_PATH):
+        return set()
+    with open(UUID_LIST_PATH, "r", encoding="utf-8") as f:
+        return set(json.loads(line.strip())["uuid"] for line in f if line.strip())
+
+
 def main():
-    map_cutoff_jst = get_latest_map_week_jst()
-    print(f"📅 Latest cutoff: {map_cutoff_jst.strftime('%Y-%m-%d %H:%M:%S JST')}")
+    cutoff_dt_jst = get_latest_tuesday_6am_jst()
+    print(f"📅 Latest cutoff: {cutoff_dt_jst.strftime('%Y-%m-%d %H:%M:%S %Z')}")
 
-    # Load old UUIDs
-    existing_uuids = set()
-    if os.path.exists(UUID_LIST_PATH):
-        with open(UUID_LIST_PATH, "r", encoding="utf-8") as f:
-            try:
-                old_data = json.load(f)
-                existing_uuids = {entry["uuid"] for entry in old_data}
-            except json.JSONDecodeError:
-                pass
+    existing_uuids = load_existing_uuids()
+    print(f"📂 Existing UUIDs loaded: {len(existing_uuids)}")
 
-    # Fetch new uploads
-    files = fetch_recent_uploads()
+    all_files = fetch_uploadcare_files()
+    print(f"📸 Files retrieved from Uploadcare: {len(all_files)}")
 
-    # Timezone
-    jst = pytz.timezone("Asia/Tokyo")
-    map_week_str = map_cutoff_jst.strftime("%Y-%m-%d")
     new_entries = []
 
-    for f in files:
-        uuid = f["uuid"]
-        datetime_str = f["datetime_uploaded"]
-        uploaded_at_utc = datetime.fromisoformat(datetime_str.replace("Z", "+00:00"))
-        uploaded_at_jst = uploaded_at_utc.astimezone(jst)
-
+    for file in all_files:
+        uuid = file["uuid"]
         if uuid in existing_uuids:
             continue
 
-        if uploaded_at_jst >= map_cutoff_jst:
-            entry = {
-                "uuid": uuid,
-                "datetime_uploaded": uploaded_at_jst.isoformat(),
-                "map_week": map_week_str
-            }
-            new_entries.append(entry)
+        uploaded_dt_utc = datetime.fromisoformat(file["datetime_uploaded"].replace("Z", "+00:00"))
+        uploaded_dt_jst = uploaded_dt_utc.astimezone(JST)
 
-    all_entries = sorted(new_entries + list(existing_uuids))
-    print(f"✅ {len(new_entries)} new file(s) after {map_week_str}")
+        if uploaded_dt_jst < cutoff_dt_jst:
+            continue  # Skip older files
 
-    # Save new list
+        map_week = get_latest_tuesday_6am_jst(uploaded_dt_jst).strftime("%Y-%m-%d")
+
+        new_entries.append({
+            "uuid": uuid,
+            "uploaded": uploaded_dt_jst.strftime("%Y-%m-%d %H:%M:%S"),
+            "map_week": map_week
+        })
+
+    print(f"✅ New entries added: {len(new_entries)}")
+
+    # Combine with existing entries (add dummy structure for older ones)
+    existing_entries = [
+        {"uuid": uuid, "uploaded": None, "map_week": None}
+        for uuid in existing_uuids
+    ]
+
+    all_entries = new_entries + existing_entries
+    all_entries.sort(key=lambda x: x["uploaded"] or "")
+
+    # Write updated list
+    os.makedirs(os.path.dirname(UUID_LIST_PATH), exist_ok=True)
     with open(UUID_LIST_PATH, "w", encoding="utf-8") as f:
-        json.dump(new_entries + list(existing_uuids), f, indent=2, ensure_ascii=False)
-    print(f"💾 UUID list updated at: {UUID_LIST_PATH}")
+        for entry in all_entries:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+    print(f"📁 UUID list written to {UUID_LIST_PATH}")
+
 
 if __name__ == "__main__":
     main()
