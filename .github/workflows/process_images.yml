@@ -1,21 +1,15 @@
 # .github/workflows/process_images.yml
-name: Process Images
+name: Process Uploaded Images
 
 on:
-  workflow_dispatch:
-
-permissions:
-  contents: write
+  workflow_call:
 
 jobs:
-  build:
+  process-images:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: true
+      - uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -28,19 +22,13 @@ jobs:
           sudo apt-get install -y tesseract-ocr libtesseract-dev tesseract-ocr-jpn
           pip install pillow pytesseract requests
 
-      - name: Fetch new image UUIDs from Uploadcare
-        env:
-          UPLOADCARE_PUBLIC_KEY: ${{ secrets.UPLOADCARE_PUBLIC_KEY }}
-          UPLOADCARE_SECRET_KEY: ${{ secrets.UPLOADCARE_SECRET_KEY }}
-        run: python processes/update_uuid_list.py
-
-      - name: Run image processing
+      - name: Run Processing Script
         run: python processes/process_images.py
 
-      - name: Commit results
+      - name: Commit Results
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add files/output.json files/output.csv files/uuid_list.txt files/uuid_metadata.csv
+          git add files/output.json files/output.csv
           git commit -m "Update processed results" || echo "No changes to commit"
           git push
