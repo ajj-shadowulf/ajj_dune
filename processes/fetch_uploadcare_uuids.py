@@ -47,8 +47,24 @@ def fetch_uploadcare_files():
 def load_existing_uuids():
     if not os.path.exists(UUID_LIST_PATH):
         return set()
+
+    existing_uuids = set()
     with open(UUID_LIST_PATH, "r", encoding="utf-8") as f:
-        return set(json.loads(line.strip())["uuid"] for line in f if line.strip())
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+                if isinstance(entry, dict) and "uuid" in entry:
+                    existing_uuids.add(entry["uuid"])
+                else:
+                    # fallback if somehow not a dict
+                    existing_uuids.add(str(entry))
+            except json.JSONDecodeError:
+                # fallback for plain UUIDs
+                existing_uuids.add(line)
+    return existing_uuids
 
 
 def main():
