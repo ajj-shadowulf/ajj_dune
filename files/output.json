@@ -1,42 +1,50 @@
 [
   {
-    "uuid": "2692560f-f165-4cfa-8c9c-b0aa269e5b9b",
-    "text": "EA ッッ と\n\n| D-6地図\n| エリの完頭率\n\na  地形\n\nWa\n\n© i Oe\n\no                                     |\nWn  ean                         |\nha\n\no  収集アイテム                       |",
-    "area_code": "D-6"
-  },
-  {
-    "uuid": "6d24fe52-fb01-42a7-b68f-a28ac49c7bad",
-    "text": "すずきち#92413                                                                                                                                                                                  J 235509 レベル12e\n\nさと\nー                 ーー\nKM マッフェリアァ\nマ\n\nか\nか\n\n回 再センタリング Bw Gees",
-    "area_code": ""
-  },
-  {
     "uuid": "d0804dd4-00f0-4329-9a63-b52e7646da5d",
     "text": "EA ッッ と\n\n| D-6地図\n| エリの完頭率\n\na  地形\n\nWa\n\n© i Oe\n\no                                     |\nWn  ean                         |\nha\n\no  収集アイテム                       |",
-    "area_code": "D-6"
+    "area_code": "D-6",
+    "map_week": "2025-06-10"
+  },
+  {
+    "uuid": "2692560f-f165-4cfa-8c9c-b0aa269e5b9b",
+    "text": "EA ッッ と\n\n| D-6地図\n| エリの完頭率\n\na  地形\n\nWa\n\n© i Oe\n\no                                     |\nWn  ean                         |\nha\n\no  収集アイテム                       |",
+    "area_code": "D-6",
+    "map_week": "2025-06-10"
   },
   {
     "uuid": "c2ddd44a-76e8-482f-a4c0-08f50a396154",
     "text": "すずきち#92413                                                                                                                                                                                  J 235509 レベル12e\n\nさと\nー                 ーー\nKM マッフェリアァ\nマ\n\nか\nか\n\n回 再センタリング Bw Gees",
-    "area_code": ""
+    "area_code": "",
+    "map_week": "2025-06-10"
+  },
+  {
+    "uuid": "6d24fe52-fb01-42a7-b68f-a28ac49c7bad",
+    "text": "すずきち#92413                                                                                                                                                                                  J 235509 レベル12e\n\nさと\nー                 ーー\nKM マッフェリアァ\nマ\n\nか\nか\n\n回 再センタリング Bw Gees",
+    "area_code": "",
+    "map_week": "2025-06-10"
   },
   {
     "uuid": "2ec52e45-d59e-43a0-83de-0b7723d5794e",
     "text": "すずきち#92413                                                                                                                                                                                  J 235509 レベル12e\n\nさと\nー                 ーー\nKM マッフェリアァ\nマ\n\nか\nか\n\n回 再センタリング Bw Gees",
-    "area_code": ""
+    "area_code": "",
+    "map_week": "2025-06-10"
   },
   {
     "uuid": "fca911f4-377d-42ce-8513-8c7c8802d53a",
     "text": "2) マップエリア",
-    "area_code": ""
+    "area_code": "",
+    "map_week": "2025-06-10"
   },
   {
     "uuid": "4d11cda2-244f-4b90-adf6-d4f127c3b999",
     "text": "2) マップエリア",
-    "area_code": ""
+    "area_code": "",
+    "map_week": "2025-06-10"
   },
   {
     "uuid": "859048ba-e6d9-46c4-ae22-5ac78f10e7af",
     "text": "2) マップエリア",
-    "area_code": ""
+    "area_code": "",
+    "map_week": "2025-06-10"
   }
 ]
