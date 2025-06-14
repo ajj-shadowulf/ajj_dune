@@ -117,6 +117,5 @@ def main():
 
     print(f"📁 UUID list written to {UUID_LIST_PATH}")
 
-
 if __name__ == "__main__":
     main()
