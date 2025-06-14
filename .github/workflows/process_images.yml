@@ -7,11 +7,9 @@ on:
 
 jobs:
   process-images:
-  process-images:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
       - uses: actions/checkout@v3
 
       - name: Set up Python
@@ -26,10 +24,8 @@ jobs:
           pip install pillow pytesseract requests
 
       - name: Run Processing Script
-      - name: Run Processing Script
         run: python processes/process_images.py
 
-      - name: Commit Results
       - name: Commit Results
         run: |
           git config user.name github-actions
